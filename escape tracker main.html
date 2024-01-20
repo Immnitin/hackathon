@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        form {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Expense Tracker</h2>
+
+<div>
+    <label for="totalAmount">Enter Total Amount:</label>
+    <input type="number" id="totalAmountInput" placeholder="Enter total amount">
+    <button onclick="initializeExpenseTracker()">Start Expense Tracker</button>
+</div>
+
+<div id="totalAmountDisplay" style="display: none;">
+    <p>Total Amount: $<span id="totalAmount">0.00</span></p>
+    <p>Savings: $<span id="savings">0.00</span></p>
+</div>
+
+<form id="expenseForm" style="display: none;">
+    <label>Select Type:</label>
+    <input type="radio" id="expenseType" name="expenseType" value="expense" checked>
+    <label for="expenseType">Expense</label>
+    <input type="radio" id="savingsType" name="expenseType" value="savings">
+    <label for="savingsType">Savings</label>
+
+    <label for="category">Select Category:</label>
+    <select id="category" onchange="showOtherCategory()">
+        <option value="" selected disabled>Select</option>
+        <option value="food">Food</option>
+        <option value="stationary">Stationary</option>
+        <option value="clothing">Clothing</option>
+        <option value="miscellaneous">Miscellaneous</option>
+        <option value="others">Others</option>
+    </select>
+
+    <div id="otherCategoryInput" style="display: none;">
+        <label for="otherCategory">Enter Other Category:</label>
+        <input type="text" id="otherCategory" placeholder="Enter category">
+    </div>
+
+    <label for="amount">Enter Amount:</label>
+    <input type="number" id="amount" placeholder="Enter amount">
+
+    <button type="button" onclick="addTransaction()">Add Transaction</button>
+</form>
+
+<h3>Transaction History</h3>
+<table id="expenseTable" style="display: none;">
+    <thead>
+    <tr>
+        <th>Date & Time</th>
+        <th>Type</th>
+        <th>Category</th>
+        <th>Amount</th>
+    </tr>
+    </thead>
+    <tbody>
+    <!-- Transactions will be added here dynamically -->
+    </tbody>
+</table>
+
+<div id="balance" style="display: none;"></div>
+
+<script>
+    let totalAmount = 0;
+    let balanceAmount = 0;
+    let savingsAmount = 0;
+    let transactions = [];
+    const savingsLimit = 0.15;
+
+    function initializeExpenseTracker() {
+        totalAmount = parseFloat(document.getElementById("totalAmountInput").value) || 0;
+        savingsAmount = savingsLimit * totalAmount; // 15% of total amount as initial savings
+        balanceAmount = totalAmount - savingsAmount;
+
+        document.getElementById("totalAmount").innerText = totalAmount.toFixed(2);
+        document.getElementById("savings").innerText = savingsAmount.toFixed(2);
+        document.getElementById("totalAmountDisplay").style.display = "block";
+        document.getElementById("totalAmountInput").disabled = true;
+
+        document.getElementById("expenseForm").style.display = "block";
+        document.getElementById("expenseTable").style.display = "block";
+        document.getElementById("balance").style.display = "block";
+
+        updateBalance();
+    }
+
+    function showOtherCategory() {
+        const category = document.getElementById("category").value;
+        const otherCategoryInput = document.getElementById("otherCategoryInput");
+
+        if (category === "others") {
+            otherCategoryInput.style.display = "block";
+        } else {
+            otherCategoryInput.style.display = "none";
+        }
+    }
+
+    function addTransaction() {
+        const expenseType = document.querySelector('input[name="expenseType"]:checked').value;
+        const category = document.getElementById("category").value;
+        const amount = parseFloat(document.getElementById("amount").value) || 0;
+        let otherCategory = "";
+
+        if (category === "others") {
+            otherCategory = document.getElementById("otherCategory").value;
+        }
+
+        const date = new Date().toLocaleString();
+        const transaction = { date, type: expenseType, category: otherCategory || category, amount };
+        transactions.push(transaction);
+
+        if (expenseType === "savings") {
+            savingsAmount += amount;
+            balanceAmount += amount;
+        } else {
+            balanceAmount -= amount;
+        }
+
+        if (balanceAmount <= savingsLimit * totalAmount) {
+            alert("You cannot perform additional expense transactions. Your balance has reached the savings limit.");
+            document.getElementById("savingsType").checked = true;
+            document.getElementById("expenseType").disabled = true;
+            document.getElementById("savingsType").disabled = true;
+        } else {
+            document.getElementById("expenseType").disabled = false;
+            document.getElementById("savingsType").disabled = false;
+        }
+
+        updateTable();
+        updateBalance();
+        clearForm();
+    }
+
+    function updateTable() {
+        const tableBody = document.querySelector("#expenseTable tbody");
+
+        // Clear existing rows
+        tableBody.innerHTML = "";
+
+        // Add new rows
+        transactions.forEach(transaction => {
+            const row = tableBody.insertRow();
+            const dateCell = row.insertCell(0);
+            const typeCell = row.insertCell(1);
+            const categoryCell = row.insertCell(2);
+            const amountCell = row.insertCell(3);
+
+            dateCell.textContent = transaction.date;
+            typeCell.textContent = transaction.type;
+            categoryCell.textContent = transaction.category;
+            amountCell.textContent = transaction.amount.toFixed(2);
+        });
+    }
+
+    function updateBalance() {
+        document.getElementById("balance").innerText = `Balance: $${balanceAmount.toFixed(2)}`;
+        document.getElementById("savings").innerText = `Savings: $${savingsAmount.toFixed(2)}`;
+    }
+
+    function clearForm() {
+        document.getElementById("category").value = "";
+        document.getElementById("otherCategory").value = "";
+        document.getElementById("amount").value = "";
+    }
+</script>
+
+</body>
+</html>
+
+
+
